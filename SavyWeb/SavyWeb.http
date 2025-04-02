@@ -1,0 +1,6 @@
+@SavyWeb_HostAddress = http://localhost:5188
+
+GET {{SavyWeb_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
