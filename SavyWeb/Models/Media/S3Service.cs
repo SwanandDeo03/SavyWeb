@@ -1,4 +1,4 @@
-using Amazon;
+﻿using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
@@ -8,12 +8,12 @@ using System.Net.Mime;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace SavyWeb.Models;
 public class S3Service
 {
     private readonly IAmazonS3 _s3Client;
+
     private readonly string _bucketName;
-    private string contentType;
+    private string contentType = "application/octet-stream";
 
     public S3Service(IConfiguration configuration)
     {
@@ -22,42 +22,46 @@ public class S3Service
             configuration["AWS:SecretKey"],
             RegionEndpoint.GetBySystemName(configuration["AWS:Region"])
         );
-        _bucketName = configuration["AWS:BucketName"];
-    }
-}
 
-_bucketName = configuration["AWS:BucketName"] ?? throw new ArgumentNullException(nameof(configuration), "Bucket name cannot be null");
+        _bucketName = configuration["AWS:BucketName"] ?? throw new ArgumentNullException(nameof(configuration), "Bucket name cannot be null");
     }
 
-    public async Task UploadFileAsync(Stream fileStream, string fileName)
+    public async Task UploadFileAsync(Stream fileStream, string fileName, string contentType)
     {
-        string contentType;
-
         var putRequest = new PutObjectRequest
         {
             BucketName = _bucketName,
             Key = fileName,
             InputStream = fileStream,
-            ContentType = "image/jpg";
-            CannedACL = S3CannedACL.Private // Keep the file private
+            ContentType = contentType,
+            Metadata =
+        {
+            ["Content-Type"] = contentType,
+            ["Content-Disposition"] = "inline"
+        },
+            CannedACL = S3CannedACL.Private
         };
 
         await _s3Client.PutObjectAsync(putRequest);
     }
 
+
     // Generate a Pre-Signed URL to allow temporary access to the file
-    public string GetPreSignedUrl(string fileName, int expiryInMinutes = 1440)
+    public string GetPreSignedUrl(string fileName, int expiryInOneDay = 1440)
     {
-        var request = new GetPreSignedUrlRequest
+        GetPreSignedUrlRequest request = new()
         {
             BucketName = _bucketName,
             Key = fileName,
-            Expires = DateTime.UtcNow.AddMinutes(expiryInMinutes), // Set expiration time
-            Protocol = Protocol.HTTPS
+            Expires = DateTime.UtcNow.AddMinutes(expiryInOneDay), // 1440 minutes = 1 day
+            Protocol = Protocol.HTTPS,
+            ResponseHeaderOverrides = new ResponseHeaderOverrides() // Fixing the CS1526 error
+            {
+                ContentDisposition = "inline"
+
+            }
         };
 
         return _s3Client.GetPreSignedURL(request);
-    }
-    
+    }   
 }
-

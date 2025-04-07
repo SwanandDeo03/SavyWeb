@@ -1,4 +1,4 @@
-//using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
@@ -21,7 +21,7 @@ namespace SavyWeb.Models.Media
             _s3Service = s3Service;
         }
 
-        //[HttpPost]
+        [HttpPost]
         [Route("S3Upload")]
         public async Task<IActionResult> UploadFile(IFormFile file)
         {
