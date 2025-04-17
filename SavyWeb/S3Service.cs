@@ -6,7 +6,7 @@ internal class S3Service
         throw new NotImplementedException();
     }
 
-    internal async Task UploadFileAsync(MemoryStream stream, string fileName)
+    internal void UploadFile(MemoryStream stream, string fileName)
     {
         throw new NotImplementedException();
     }
